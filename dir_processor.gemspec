@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = DirProcessor::VERSION
   spec.authors       = ["Alexander K"]
   spec.email         = ["xpyro@ya.ru"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
-  spec.homepage      = ""
+  spec.description   = %q{ dsl to define processor for directories/files structure }.strip
+  spec.summary       = %q{ dsl to define processor for directories/files structure }.strip
+  spec.homepage      = "https://github.com/sowcow/dir_processor"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
