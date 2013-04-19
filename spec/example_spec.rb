@@ -25,7 +25,7 @@ describe 'DirProcessor method' do
     DirProcessor(){}.send(:so).should_not == DirProcessor(){ dir('.'){} }.send(:so)
   end
 
-  example '' do
+  example 'basic' do
     data = {}
     this = DirProcessor do
       file 'about.png' do |file|
