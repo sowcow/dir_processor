@@ -40,7 +40,7 @@ module DirProcessor
     # DSL definition
     class AFile < Struct.new :pattern
       @dsl = :file
-      include RemembersBlock, AcceptPattern #UseBlockAndPattern
+      include RemembersBlock, AcceptPattern
       def feed given
         @block.call given if accept? given
       end      
@@ -51,6 +51,11 @@ module DirProcessor
       AFile = AFile
       include AcceptPattern
 
+      class First
+        include RemembersBlock
+        def feed dir; @block.call dir end
+      end
+
       def feed dir
         return unless accept? dir
 
@@ -59,6 +64,10 @@ module DirProcessor
         all = Dir.entries(dir).reject(&crap).group_by { |x| File.directory?(x) ? :dirs : :files }
         all_files = all[:files]
         all_dirs = all[:dirs]
+
+        so2(:first).each do |processor|
+          processor.feed dir
+        end
 
         so2(:file).each do |processor|
           (all[:files] || []).each { |file| processor.feed long_name(dir,file) }

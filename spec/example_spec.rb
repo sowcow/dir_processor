@@ -25,13 +25,18 @@ describe 'DirProcessor method' do
     DirProcessor(){}.send(:so).should_not == DirProcessor(){ dir('.'){} }.send(:so)
   end
 
-  example 'basic' do
+  example 'main' do
     data = {}
     this = DirProcessor do
       file 'about.png' do |file|
         data[:about] = file
       end
       dir 'mp3s' do
+        first do |dir|
+          Dir.exist?(dir).should == true
+          (data[:dirs] ||= []) << dir
+        end
+
         file '*.mp3' do |file|
           File.exist?(file).should == true
           (data[:mp3s] ||= []) << file 
@@ -50,9 +55,10 @@ describe 'DirProcessor method' do
       this.feed '.'
     end
 
-    data.keys.should =~ [:about, :mp3s]
+    data.keys.should =~ [:about, :dirs, :mp3s]
     data[:about].should == 'about.png'
     data[:mp3s].should =~ %w[ mp3s/one.mp3  mp3s/two.mp3  mp3s/three.mp3 ]
+    data[:dirs].should =~ %w[ mp3s ]
   end
 
 end
