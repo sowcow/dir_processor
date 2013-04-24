@@ -68,7 +68,6 @@ module DirProcessor
         so2(:first).each do |processor|
           processor.feed dir
         end
-
         so2(:file).each do |processor|
           (all[:files] || []).each { |file| processor.feed long_name(dir,file) }
         end

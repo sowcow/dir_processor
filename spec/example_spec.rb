@@ -1,4 +1,5 @@
-# TODO: rename instance_eval -> feed_block or so
+# do we need variant for lazy stuff??? (to get rid of dir~first do)
+#
 # (...)
 # so1,so2: returns just last and array
 # file,files: yields one by one and all as array
@@ -42,6 +43,12 @@ describe 'DirProcessor method' do
           (data[:mp3s] ||= []) << file 
         end
       end
+      dir 'empty' do
+        first do |dir|
+          Dir.exist?(dir).should == true
+          (data[:dirs] ||= []) << dir
+        end
+      end
     end
 
     temp_dir do
@@ -52,13 +59,36 @@ describe 'DirProcessor method' do
       mkfile 'mp3s/two.mp3'
       mkfile 'mp3s/three.mp3'
 
+      Dir.mkdir 'empty'
+
       this.feed '.'
     end
 
     data.keys.should =~ [:about, :dirs, :mp3s]
     data[:about].should == 'about.png'
     data[:mp3s].should =~ %w[ mp3s/one.mp3  mp3s/two.mp3  mp3s/three.mp3 ]
-    data[:dirs].should =~ %w[ mp3s ]
+    data[:dirs].should =~ %w[ empty mp3s ]
+  end
+
+  example 'just empty dir case' do
+    data = {}
+
+    this = DirProcessor do
+      dir 'empty' do
+        first do |dir|
+          Dir.exist?(dir).should == true
+          (data[:dirs] ||= []) << dir
+        end
+      end
+    end
+
+    temp_dir do
+      Dir.mkdir 'empty'
+      this.feed '.'
+    end
+
+    data.keys.should =~ [:dirs]
+    data[:dirs].should =~ %w[ empty ]    
   end
 
 end
