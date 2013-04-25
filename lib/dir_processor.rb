@@ -1,8 +1,51 @@
 require "dir_processor/version"
 require 'def_dsl'
+# require 'pathname'
 
 def DirProcessor &block
   DirProcessor.new &block
+end
+
+# my try to dry
+module FeedMethod
+  def feed dir
+    return unless accept? dir
+
+    # Copy/Paste:
+    crap = proc { |x| x == '.' || x == '..' }
+
+    Dir.chdir dir do
+      this_dir = dir
+      dir = '.'
+
+    all = Dir.entries(dir).reject(&crap).group_by { |x| is_dir?(x) ? :dirs : :files } #long_name
+    all_files = all[:files]
+    all_dirs = all[:dirs]
+
+    so2(:first).each do |processor|
+      processor.feed this_dir
+    end
+    so2(:file).each do |processor|
+      (all[:files] || []).each { |file| processor.feed file } # long_name(dir,file) }
+    end
+    so2(:dir).each do |processor|
+      # require 'pry'; binding.pry
+      (all[:dirs] || []).each do |f|
+        processor.feed f #long_name(dir,f)
+      end
+    end
+
+    end
+  end
+
+  private
+  def long_name dir,file
+    File.join(dir,file).sub /^\.\//, ''
+  end   
+  def is_dir? file
+    raise "file disappeared or did'nt exist..." unless File.exist? file
+    File.directory? file
+  end
 end
 
 module DirProcessor
@@ -56,30 +99,7 @@ module DirProcessor
         def feed dir; @block.call dir end
       end
 
-      def feed dir
-        return unless accept? dir
-
-        # Copy/Paste:
-        crap = proc { |x| x == '.' || x == '..' }
-        all = Dir.entries(dir).reject(&crap).group_by { |x| File.directory?(x) ? :dirs : :files }
-        all_files = all[:files]
-        all_dirs = all[:dirs]
-
-        so2(:first).each do |processor|
-          processor.feed dir
-        end
-        so2(:file).each do |processor|
-          (all[:files] || []).each { |file| processor.feed long_name(dir,file) }
-        end
-        so2(:dir).each do |processor|
-          (all[:dirs] || []).each { |f| processor.feed long_name(dir,f) }
-        end
-      end
-
-      private
-      def long_name dir,file
-        File.join(dir,file).sub /^\.\//, ''
-      end      
+      include FeedMethod     
     end
     extend DefDSL
     def_dsl ADir, AFile
@@ -93,28 +113,30 @@ module DirProcessor
       instance_eval &block #yield
     end
 
+    include FeedMethod
+    def accept?(*); true end
 
-      def feed dir
-        # return unless accept? dir
+      # def feed dir
+      #   # return unless accept? dir
 
-        # Copy/Paste:
-        crap = proc { |x| x == '.' || x == '..' }
-        all = Dir.entries(dir).reject(&crap).group_by { |x| File.directory?(x) ? :dirs : :files }
-        all_files = all[:files]
-        all_dirs = all[:dirs]
+      #   # Copy/Paste:
+      #   crap = proc { |x| x == '.' || x == '..' }
+      #   all = Dir.entries(dir).reject(&crap).group_by { |x| File.directory?(x) ? :dirs : :files }
+      #   all_files = all[:files]
+      #   all_dirs = all[:dirs]
 
-        so2(:file).each do |processor|
-          (all[:files] || []).each { |file| processor.feed long_name(dir,file) }
-        end
-        so2(:dir).each do |processor|
-          (all[:dirs] || []).each { |f| processor.feed long_name(dir,f) }
-        end
-      end
+      #   so2(:file).each do |processor|
+      #     (all[:files] || []).each { |file| processor.feed long_name(dir,file) }
+      #   end
+      #   so2(:dir).each do |processor|
+      #     (all[:dirs] || []).each { |f| processor.feed long_name(dir,f) }
+      #   end
+      # end
 
-      private
-      def long_name dir,file
-        File.join(dir,file).sub /^\.\//, ''
-      end  
+      # private
+      # def long_name dir,file
+      #   File.join(dir,file).sub /^\.\//, ''
+      # end  
       
     # def feed dir
     #   # @so = @dir.feed(dir).send(:so)

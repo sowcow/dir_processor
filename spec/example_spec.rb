@@ -1,5 +1,5 @@
 # do we need variant for lazy stuff??? (to get rid of dir~first do)
-#
+# one_dir / dir '', 1..2 do
 # (...)
 # so1,so2: returns just last and array
 # file,files: yields one by one and all as array
@@ -23,7 +23,7 @@ describe 'DirProcessor method' do
   end
 
   it 'is configured by block' do
-    DirProcessor(){}.send(:so).should_not == DirProcessor(){ dir('.'){} }.send(:so)
+    DirProcessor(){}.send(:so).should_not == DirProcessor(){ dir('*'){} }.send(:so)
   end
 
   example 'main' do
@@ -34,7 +34,9 @@ describe 'DirProcessor method' do
       end
       dir 'mp3s' do
         first do |dir|
-          Dir.exist?(dir).should == true
+          # already chdir-ed in the dir
+          File.basename(File.expand_path('.')).should == dir
+          # Dir.exist?(dir).should == true
           (data[:dirs] ||= []) << dir
         end
 
@@ -45,28 +47,31 @@ describe 'DirProcessor method' do
       end
       dir 'empty' do
         first do |dir|
-          Dir.exist?(dir).should == true
+          # already chdir-ed in the dir
+          File.basename(File.expand_path('.')).should == dir
+          # Dir.exist?(dir).should == true
           (data[:dirs] ||= []) << dir
         end
       end
     end
 
     temp_dir do
-      mkfile 'about.png'
-      mkfile 'any.other'
+      mkfile '1/about.png'
+      mkfile '1/any.other'
 
-      mkfile 'mp3s/one.mp3'
-      mkfile 'mp3s/two.mp3'
-      mkfile 'mp3s/three.mp3'
+      mkfile '1/mp3s/one.mp3'
+      mkfile '1/mp3s/two.mp3'
+      mkfile '1/mp3s/three.mp3'
 
-      Dir.mkdir 'empty'
-
-      this.feed '.'
+      mkdir '1/empty'
+      
+      this.feed '1'
     end
 
     data.keys.should =~ [:about, :dirs, :mp3s]
     data[:about].should == 'about.png'
-    data[:mp3s].should =~ %w[ mp3s/one.mp3  mp3s/two.mp3  mp3s/three.mp3 ]
+    # data[:mp3s].should =~ %w[ mp3s/one.mp3  mp3s/two.mp3  mp3s/three.mp3 ]
+    data[:mp3s].should =~ %w[ one.mp3  two.mp3  three.mp3 ]
     data[:dirs].should =~ %w[ empty mp3s ]
   end
 
@@ -74,21 +79,24 @@ describe 'DirProcessor method' do
     data = {}
 
     this = DirProcessor do
-      dir 'empty' do
+      dir '*' do
         first do |dir|
-          Dir.exist?(dir).should == true
+          # already chdir-ed in the dir
+          File.basename(File.expand_path('.')).should == dir
+          # Dir.exist?(dir).should == true
           (data[:dirs] ||= []) << dir
         end
       end
     end
 
     temp_dir do
-      Dir.mkdir 'empty'
-      this.feed '.'
+      mkdir '1/empty'
+      Dir.exist?('1/empty').should == true
+      this.feed '1'
     end
 
-    data.keys.should =~ [:dirs]
-    data[:dirs].should =~ %w[ empty ]    
+    data.keys.should == [:dirs]
+    data[:dirs].should == %w[ empty ]    
   end
 
 end
